@@ -175,9 +175,9 @@ public partial class MainWindow : Window{
  }
  void Signature_Click(object sender,RoutedEventArgs e){
   if(CurrentAccount is null)return;
-  var w=new SignatureWindow(CurrentAccount.Signature){Owner=this};
+  var w=new SignatureWindow(CurrentAccount.Signature,CurrentAccount.SignatureImage,CurrentAccount.SignatureWidth){Owner=this};
   if(w.ShowDialog()!=true)return;
-  CurrentAccount.Signature=w.Signature;AccountStore.Save(accounts);
+  CurrentAccount.Signature=w.Signature;CurrentAccount.SignatureImage=w.SignatureImage;CurrentAccount.SignatureWidth=w.SignatureWidth;AccountStore.Save(accounts);
  }
  void Website_Click(object sender,RoutedEventArgs e)=>Process.Start(new ProcessStartInfo("https://aso4tech.com"){UseShellExecute=true});
 }
