@@ -1,0 +1,10 @@
+<Window x:Class="Aso4Mail.SignatureWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Email signature" Width="520" Height="340" WindowStartupLocation="CenterOwner" Background="#212121" Foreground="White">
+ <DockPanel Margin="22">
+  <StackPanel DockPanel.Dock="Top">
+   <TextBlock Text="Email signature" FontSize="24" Foreground="#F4BE58" Margin="0,0,0,14"/>
+   <TextBlock Text="Plain-text signature for this account" Margin="0,0,0,6"/>
+  </StackPanel>
+  <Button DockPanel.Dock="Bottom" Content="Save signature" Click="Save_Click" Margin="0,12,0,0"/>
+  <TextBox x:Name="Editor" Background="#303030" Foreground="White" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+ </DockPanel>
+</Window>
