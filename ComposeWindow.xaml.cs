@@ -13,6 +13,7 @@ public partial class ComposeWindow:Window{
  public ComposeWindow(MailAccount account,string to="",string cc="",string subject="",string body=""){
   InitializeComponent();
   this.account=account;Recipient.Text=to;CcBox.Text=cc;Subject.Text=subject;Body.Text=body;
+  ContactsPicker.ItemsSource=account.Contacts??new List<MailContact>();
   UpdateAttachments();
  }
  void UpdateAttachments(){
@@ -20,6 +21,12 @@ public partial class ComposeWindow:Window{
   Attachments.ItemsSource=attachments.Select(x=>Path.GetFileName(x)).ToList();
   var total=attachments.Sum(x=>new FileInfo(x).Length);
   AttachmentSummary.Text=$"{attachments.Count} file(s) • {total/1048576.0:F1} MiB / 50 MiB";
+ }
+ void ContactsPicker_SelectionChanged(object sender,System.Windows.Controls.SelectionChangedEventArgs e){
+  if(ContactsPicker.SelectedItem is not MailContact contact)return;
+  var address=contact.Email;
+  Recipient.Text=string.IsNullOrWhiteSpace(Recipient.Text)?address:Recipient.Text.TrimEnd().TrimEnd(';',',')+"; "+address;
+  ContactsPicker.SelectedIndex=-1;
  }
  void Attach_Click(object sender,RoutedEventArgs e){
   var picker=new OpenFileDialog{Multiselect=true,Title="Add file attachments"};

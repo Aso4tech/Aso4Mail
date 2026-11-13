@@ -55,6 +55,7 @@
       <TextBlock Text="MAIL FOLDERS" FontSize="10" Foreground="#9AA0AB" Margin="9,0,0,9"/>
      </StackPanel>
      <StackPanel DockPanel.Dock="Bottom">
+      <Button Content="♙  Contacts" Style="{StaticResource ActionButton}" Margin="0,0,0,9" Click="Contacts_Click"/>
       <Button Content="✎  Account signatures" Style="{StaticResource ActionButton}" Margin="0,0,0,9" Click="Signature_Click"/>
       <Button Content="🌐  aso4tech.com" Style="{StaticResource ActionButton}" Click="Website_Click"/>
       <TextBlock Text="Aso4Mail 10.1  •  Windows" Foreground="#858A93" FontSize="10" Margin="8,17,0,0"/>

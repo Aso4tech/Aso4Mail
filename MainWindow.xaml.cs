@@ -198,6 +198,11 @@ public partial class MainWindow : Window{
   if(File.Exists(dialog.FileName)){MessageBox.Show("Choose a new file name to avoid overwriting existing files.");return;}
   try{await MailService.SaveAttachmentAsync(CurrentAccount,CurrentFolder.FullName,CurrentMessage.Uid,part.Index,dialog.FileName,CancellationToken.None);StatusText.Text="Attachment saved.";}catch(Exception ex){MessageBox.Show(ex.Message);}
  }
+ void Contacts_Click(object sender,RoutedEventArgs e){
+  if(CurrentAccount is null)return;
+  var w=new ContactsWindow(CurrentAccount){Owner=this};
+  if(w.ShowDialog()==true)AccountStore.Save(accounts);
+ }
  void Signature_Click(object sender,RoutedEventArgs e){
   if(CurrentAccount is null)return;
   var w=new SignatureWindow(CurrentAccount.Signature,CurrentAccount.SignatureImage,CurrentAccount.SignatureWidth){Owner=this};
