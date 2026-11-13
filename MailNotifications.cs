@@ -1,43 +1,38 @@
-
 using System;
 using System.Globalization;
-using System.Windows;
 using Microsoft.Toolkit.Uwp.Notifications;
+using WpfApplication=System.Windows.Application;
 namespace Aso4Mail;
-
-/// <summary>
-/// Windows-native app notifications. No PowerShell, no remote push server, no autostart.
-/// Handles activation on the WPF dispatcher. Windows can suppress alerts based on Settings.
-/// </summary>
 public static class MailNotifications {
  public static event Action<string,uint>? OpenMessageRequested;
+ public static (string Email,uint Uid)? Pending;
  static bool initialized;
  public static void Initialize(){
-  if(initialized)return;
-  initialized=true;
+  if(initialized)return;initialized=true;
   ToastNotificationManagerCompat.OnActivated+=(args)=>{
-   try{
-    var kv=ToastArguments.Parse(args.Argument);
-    var email=kv["email"];
-    var uidText=kv["uid"];
-    if(string.IsNullOrWhiteSpace(email)||!uint.TryParse(uidText,NumberStyles.None,CultureInfo.InvariantCulture,out var uid))return;
-    Application.Current?.Dispatcher.BeginInvoke(new Action(()=>OpenMessageRequested?.Invoke(email,uid)));
-   }catch(Exception){ /* Ignore invalid or expired activation parameters. */ }
+   try {
+    var data=ToastArguments.Parse(args.Argument);
+    var email=data["email"];
+    if(string.IsNullOrWhiteSpace(email)||!uint.TryParse(data["uid"],NumberStyles.None,CultureInfo.InvariantCulture,out var uid))return;
+    Pending=(email,uid);
+    WpfApplication.Current?.Dispatcher.BeginInvoke(new Action(()=>OpenMessageRequested?.Invoke(email,uid)));
+   }catch { /* Ignore malformed and expired toast activation data. */ }
   };
  }
  public static void Test(){
   Initialize();
-  new ToastContentBuilder().AddText("Aso4Mail").AddText("Windows notifications are enabled for this application.").Show();
+  new ToastContentBuilder().AddText("Aso4Mail — notification test")
+   .AddText("Notifications have been requested. Check Windows notification settings.").Show();
  }
- public static void Show(MailAccount account,InboxRow message){
-  if(!initialized)Initialize();
-  try{
+ public static void Show(MailAccount account,InboxRow mail){
+  Initialize();
+  try {
    new ToastContentBuilder()
     .AddArgument("email",account.Email)
-    .AddArgument("uid",message.Uid.ToString(CultureInfo.InvariantCulture))
-    .AddText("New mail • "+account.Email)
-    .AddText(string.IsNullOrWhiteSpace(message.Subject)?"New message":message.Subject)
+    .AddArgument("uid",mail.Uid.ToString(CultureInfo.InvariantCulture))
+    .AddText("New email • "+account.Email)
+    .AddText(mail.From+" — "+(string.IsNullOrWhiteSpace(mail.Subject)?"New message":mail.Subject))
     .Show();
-  }catch(Exception){ /* Notification delivery is optional; never interrupt mail sync. */ }
+  }catch { /* Notification failures never interrupt mail synchronization. */ }
  }
 }
