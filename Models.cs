@@ -6,6 +6,7 @@ public sealed class MailAccount {
  public string Email {get;set;}="";
  public string Password {get;set;}="";
  public string Signature {get;set;}="";
+ public List<MailContact> Contacts {get;set;}=new();
  public string SignatureImage {get;set;}="";
  public int SignatureWidth {get;set;}=220;
  public string Domain=>Email.Split('@').Last().ToLowerInvariant();
@@ -55,4 +56,9 @@ public sealed class SendResult {
  public bool SmtpAccepted {get;init;}
  public bool SavedToSent {get;init;}
  public string? Warning {get;init;}
+}
+public sealed class MailContact {
+ public string Name {get;set;}="";
+ public string Email {get;set;}="";
+ public override string ToString() => string.IsNullOrWhiteSpace(Name)?Email:$"{Name} <{Email}>";
 }
