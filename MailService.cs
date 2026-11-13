@@ -81,6 +81,21 @@ public static class MailService {
   var msg=await f.GetMessageAsync(new UniqueId(uid),ct);
   var attachments=msg.Attachments.Select((att,i)=>new MailAttachmentRow{Index=i,Name=att.ContentDisposition?.FileName??att.ContentType.Name??$"Attachment {i+1}"}).ToList();
   var html=msg.HtmlBody??"";
+  // Replace embedded CID images with bounded data URIs. Never fetch external image URLs.
+  if(html.Length<2_000_000){
+   var cumulative=0L;
+   foreach(var part in msg.BodyParts.OfType<MimePart>()){
+    if(string.IsNullOrEmpty(part.ContentId))continue;
+    var media=part.ContentType.MimeType.ToLowerInvariant();
+    if(media is not ("image/png" or "image/jpeg" or "image/gif"))continue;
+    using var output=new MemoryStream();
+    await part.Content.DecodeToAsync(output,ct);
+    cumulative+=output.Length;
+    if(output.Length>1_000_000||cumulative>4_000_000)break;
+    var data="data:"+media+";base64,"+Convert.ToBase64String(output.ToArray());
+    html=Regex.Replace(html,"cid:"+Regex.Escape(part.ContentId),_=>data,RegexOptions.IgnoreCase);
+   }
+  }
   // This HTML must only be rendered inside the isolated, script-disabled WebView.
   var text=msg.TextBody??HtmlToText(html);
   await c.DisconnectAsync(true,ct);
