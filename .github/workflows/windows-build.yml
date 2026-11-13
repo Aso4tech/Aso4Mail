@@ -2,7 +2,7 @@ name: Build Aso4Mail Windows (unverified test)
 on:
   workflow_dispatch:
   push:
-    branches: [main, feature/outlook-like-redesign]
+    branches: [main, feature/outlook-like-redesign, feature/aso4mail-pro]
     paths:
       - '**/*.cs'
       - '**/*.xaml'

@@ -1,15 +1,21 @@
-<Window x:Class="Aso4Mail.ComposeWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="New message — Aso4Mail" Width="750" Height="650" WindowStartupLocation="CenterOwner" Background="#1D1D1D" Foreground="White">
- <DockPanel Margin="18">
-  <StackPanel DockPanel.Dock="Top">
-   <TextBlock Text="New message" FontSize="24" Foreground="#F4BE58" Margin="0,0,0,12"/>
-   <TextBlock Text="To:"/><TextBox x:Name="Recipient" Margin="0,5,0,9"/>
-   <TextBlock Text="Subject:"/><TextBox x:Name="Subject" Margin="0,5,0,11"/>
-  </StackPanel>
-  <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
-   <Button x:Name="SendButton" Content="Send" Click="Send_Click" Background="#694B1F" Width="100"/>
-   <Button Content="Attach files" Click="Attach_Click"/>
-   <TextBlock x:Name="AttachmentSummary" Foreground="#BBB" VerticalAlignment="Center" Margin="12,0"/>
-  </StackPanel>
-  <TextBox x:Name="Body" Background="#282828" Foreground="White" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
- </DockPanel>
+<Window x:Class="Aso4Mail.ComposeWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Compose — Aso4Mail" Width="920" Height="760" MinHeight="560" MinWidth="700" WindowStartupLocation="CenterOwner" Background="#202227" Foreground="#F5F5F5" FontFamily="Segoe UI">
+ <Window.Resources><Style TargetType="TextBox"><Setter Property="Background" Value="#2D3035"/><Setter Property="Foreground" Value="White"/><Setter Property="BorderBrush" Value="#4E5156"/><Setter Property="Padding" Value="9,7"/></Style></Window.Resources>
+ <Grid Margin="22">
+  <Grid.RowDefinitions><RowDefinition Height="55"/><RowDefinition Height="40"/><RowDefinition Height="40"/><RowDefinition Height="40"/><RowDefinition Height="40"/><RowDefinition Height="*"/><RowDefinition Height="99"/></Grid.RowDefinitions>
+  <DockPanel Grid.Row="0"><TextBlock Text="New message" FontSize="25" FontWeight="SemiBold" Foreground="#E4C28E" VerticalAlignment="Center"/><TextBlock Text="Aso4Mail" DockPanel.Dock="Right" HorizontalAlignment="Right" Foreground="#8F9398" VerticalAlignment="Center"/></DockPanel>
+  <Grid Grid.Row="1" Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="82"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="To" Foreground="#BBB" VerticalAlignment="Center"/><TextBox x:Name="Recipient" Grid.Column="1" VerticalContentAlignment="Center"/></Grid>
+  <Grid Grid.Row="2" Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="82"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="Cc" Foreground="#BBB" VerticalAlignment="Center"/><TextBox x:Name="CcBox" Grid.Column="1" VerticalContentAlignment="Center"/></Grid>
+  <Grid Grid.Row="3" Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="82"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="Bcc" Foreground="#BBB" VerticalAlignment="Center"/><TextBox x:Name="BccBox" Grid.Column="1" VerticalContentAlignment="Center"/></Grid>
+  <Grid Grid.Row="4" Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="82"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="Subject" Foreground="#BBB" VerticalAlignment="Center"/><TextBox x:Name="Subject" Grid.Column="1" VerticalContentAlignment="Center"/></Grid>
+  <Border Grid.Row="5" BorderBrush="#4B4E53" BorderThickness="1" Margin="0,10,0,6"><TextBox x:Name="Body" Background="#282A2F" BorderThickness="0" Foreground="White" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="14" Padding="17"/></Border>
+  <Grid Grid.Row="6"><Grid.RowDefinitions><RowDefinition Height="45"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+   <StackPanel Orientation="Horizontal" Grid.Row="0" VerticalAlignment="Center">
+    <Button x:Name="SendButton" Content="➤  Send" Width="105" Click="Send_Click" Background="#CBA162" Foreground="#161616" FontWeight="Bold" Padding="9,7" Margin="0,0,10,0"/>
+    <Button x:Name="DraftButton" Content="✎  Save draft" Click="SaveDraft_Click" Background="#393A3F" Foreground="#F3F3F3" Padding="11,7" Margin="0,0,10,0"/>
+    <Button Content="📎  Add attachments" Click="Attach_Click" Background="#393A3F" Foreground="#F3F3F3" Padding="11,7" Margin="0,0,10,0"/>
+    <Button Content="Remove selected" Click="RemoveAttachment_Click" Background="#393A3F" Foreground="#F3F3F3" Padding="9,7" Margin="0,0,10,0"/>
+   </StackPanel>
+   <DockPanel Grid.Row="1"><TextBlock x:Name="AttachmentSummary" DockPanel.Dock="Right" Foreground="#BCA17C" VerticalAlignment="Center" Margin="12,0"/><ListBox x:Name="Attachments" BorderThickness="0" Background="#2B2D32" Foreground="#ECECEC" SelectionMode="Single" Height="40" ScrollViewer.HorizontalScrollBarVisibility="Auto"/></DockPanel>
+  </Grid>
+ </Grid>
 </Window>
