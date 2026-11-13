@@ -165,7 +165,7 @@ public static class MailService {
   }
   await c.DisconnectAsync(true,ct);
  }
- static MimeMessage BuildMessage(MailAccount account,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths){
+ static MimeMessage BuildMessage(MailAccount account,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths,bool allowNoRecipient=false){
   long length=0;
   foreach(var path in paths){
    var file=new FileInfo(path);
@@ -178,7 +178,7 @@ public static class MailService {
   AddAddresses(msg.To,to);
   AddAddresses(msg.Cc,cc);
   AddAddresses(msg.Bcc,bcc);
-  if(msg.To.Count+msg.Cc.Count+msg.Bcc.Count==0)throw new InvalidOperationException("Enter a recipient.");
+  if(!allowNoRecipient && msg.To.Count+msg.Cc.Count+msg.Bcc.Count==0)throw new InvalidOperationException("Enter a recipient.");
   msg.Subject=subject.Trim();
   var signature=account.Signature??"";
   var contents=body+(signature.Length>0?"\n\n"+signature:"");
@@ -221,7 +221,7 @@ public static class MailService {
   }
  }
  public static async Task SaveDraftAsync(MailAccount a,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths,CancellationToken ct){
-  var msg=BuildMessage(a,to,cc,bcc,subject,body,paths);
+  var msg=BuildMessage(a,to,cc,bcc,subject,body,paths,allowNoRecipient:true);
   using var c=await ConnectAsync(a,ct);
   var drafts=await FindFolderAsync(c,"Drafts",ct);
   if(drafts is null)throw new InvalidOperationException("Drafts folder is not available on this server.");
