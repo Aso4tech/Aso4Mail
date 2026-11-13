@@ -34,10 +34,20 @@ public static class MailService {
    var row=new MailFolderRow{FullName=folder.FullName,Name=role.Length==0?folder.Name:role,Role=role,Unread=Math.Max(0,folder.Unread),SortOrder=role switch{"Inbox"=>0,"Sent"=>1,"Drafts"=>2,"Archive"=>3,"Junk"=>4,"Trash"=>5,_=>6}};
    all.TryAdd(folder.FullName,row);
   }
-  Add(c.Inbox);
+  var visited=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+  async Task WalkAsync(IMailFolder folder,int depth){
+   if(!visited.Add(folder.FullName))return;
+   Add(folder);
+   if(depth>=4||visited.Count>=300)return;
+   try{
+    var children=await folder.GetSubfoldersAsync(false,ct);
+    foreach(var child in children)await WalkAsync(child,depth+1);
+   }catch(MailKit.CommandException){}catch(FolderNotFoundException){}
+  }
+  await WalkAsync(c.Inbox,0);
   foreach(var ns in c.PersonalNamespaces){
-   var folders=await c.GetFoldersAsync(ns,false,ct);
-   foreach(var folder in folders)Add(folder);
+   var roots=await c.GetFoldersAsync(ns,false,ct);
+   foreach(var folder in roots)await WalkAsync(folder,0);
   }
   await c.DisconnectAsync(true,ct);
   return all.Values.OrderBy(x=>x.SortOrder).ThenBy(x=>x.Name,StringComparer.OrdinalIgnoreCase).ToList();
@@ -81,6 +91,21 @@ public static class MailService {
   var msg=await f.GetMessageAsync(new UniqueId(uid),ct);
   var attachments=msg.Attachments.Select((att,i)=>new MailAttachmentRow{Index=i,Name=att.ContentDisposition?.FileName??att.ContentType.Name??$"Attachment {i+1}"}).ToList();
   var html=msg.HtmlBody??"";
+  // Replace embedded CID images with bounded data URIs. Never fetch external image URLs.
+  if(html.Length<2_000_000){
+   var cumulative=0L;
+   foreach(var part in msg.BodyParts.OfType<MimePart>()){
+    if(string.IsNullOrEmpty(part.ContentId))continue;
+    var media=part.ContentType.MimeType.ToLowerInvariant();
+    if(media is not ("image/png" or "image/jpeg" or "image/gif"))continue;
+    using var output=new MemoryStream();
+    await part.Content.DecodeToAsync(output,ct);
+    cumulative+=output.Length;
+    if(output.Length>1_000_000||cumulative>4_000_000)break;
+    var data="data:"+media+";base64,"+Convert.ToBase64String(output.ToArray());
+    html=Regex.Replace(html,"cid:"+Regex.Escape(part.ContentId),_=>data,RegexOptions.IgnoreCase);
+   }
+  }
   // This HTML must only be rendered inside the isolated, script-disabled WebView.
   var text=msg.TextBody??HtmlToText(html);
   await c.DisconnectAsync(true,ct);
@@ -140,7 +165,7 @@ public static class MailService {
   }
   await c.DisconnectAsync(true,ct);
  }
- static MimeMessage BuildMessage(MailAccount account,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths){
+ static MimeMessage BuildMessage(MailAccount account,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths,bool allowNoRecipient=false){
   long length=0;
   foreach(var path in paths){
    var file=new FileInfo(path);
@@ -150,10 +175,10 @@ public static class MailService {
   }
   var msg=new MimeMessage();
   msg.From.Add(MailboxAddress.Parse(account.Email));
-  foreach(var v in SplitAddresses(to))msg.To.Add(MailboxAddress.Parse(v));
-  foreach(var v in SplitAddresses(cc))msg.Cc.Add(MailboxAddress.Parse(v));
-  foreach(var v in SplitAddresses(bcc))msg.Bcc.Add(MailboxAddress.Parse(v));
-  if(msg.To.Count+msg.Cc.Count+msg.Bcc.Count==0)throw new InvalidOperationException("Enter a recipient.");
+  AddAddresses(msg.To,to);
+  AddAddresses(msg.Cc,cc);
+  AddAddresses(msg.Bcc,bcc);
+  if(!allowNoRecipient && msg.To.Count+msg.Cc.Count+msg.Bcc.Count==0)throw new InvalidOperationException("Enter a recipient.");
   msg.Subject=subject.Trim();
   var signature=account.Signature??"";
   var contents=body+(signature.Length>0?"\n\n"+signature:"");
@@ -171,7 +196,11 @@ public static class MailService {
   foreach(var p in paths)builder.Attachments.Add(p);
   msg.Body=builder.ToMessageBody();return msg;
  }
- static IEnumerable<string> SplitAddresses(string value)=> (value??"").Split(new[]{',',';'},StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries);
+ static void AddAddresses(InternetAddressList target,string raw){
+  if(string.IsNullOrWhiteSpace(raw))return;
+  var parsed=InternetAddressList.Parse(raw.Replace(';',','));
+  foreach(var address in parsed)target.Add(address);
+ }
  public static async Task<SendResult> SendAsync(MailAccount a,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths,CancellationToken ct){
   var msg=BuildMessage(a,to,cc,bcc,subject,body,paths);
   using(var smtp=new SmtpClient{Timeout=35000}){
@@ -192,7 +221,7 @@ public static class MailService {
   }
  }
  public static async Task SaveDraftAsync(MailAccount a,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths,CancellationToken ct){
-  var msg=BuildMessage(a,to,cc,bcc,subject,body,paths);
+  var msg=BuildMessage(a,to,cc,bcc,subject,body,paths,allowNoRecipient:true);
   using var c=await ConnectAsync(a,ct);
   var drafts=await FindFolderAsync(c,"Drafts",ct);
   if(drafts is null)throw new InvalidOperationException("Drafts folder is not available on this server.");
@@ -205,10 +234,27 @@ public static class MailService {
    var found=c.GetFolder(special);
    if(found is not null)return found;
   }catch(NotSupportedException){}
+  var visited=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+  async Task<IMailFolder?> SearchAsync(IMailFolder folder,int depth){
+   if(!visited.Add(folder.FullName))return null;
+   if(GetRole(folder)==role)return folder;
+   if(depth>=4||visited.Count>=300)return null;
+   try{
+    var children=await folder.GetSubfoldersAsync(false,ct);
+    foreach(var child in children){
+     var found=await SearchAsync(child,depth+1);
+     if(found is not null)return found;
+    }
+   }catch(MailKit.CommandException){}catch(FolderNotFoundException){}
+   return null;
+  }
+  var inbox=await SearchAsync(c.Inbox,0);if(inbox is not null)return inbox;
   foreach(var ns in c.PersonalNamespaces){
-   var folders=await c.GetFoldersAsync(ns,false,ct);
-   var found=folders.FirstOrDefault(f=>GetRole(f)==role);
-   if(found is not null)return found;
+   var roots=await c.GetFoldersAsync(ns,false,ct);
+   foreach(var folder in roots){
+    var found=await SearchAsync(folder,0);
+    if(found is not null)return found;
+   }
   }
   return null;
  }
