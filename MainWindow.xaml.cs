@@ -19,6 +19,11 @@ public partial class MainWindow : Window{
  IReadOnlyList<MailFolderRow> folders=Array.Empty<MailFolderRow>();
  MessageDetail? detail;
  readonly DispatcherTimer timer=new(){Interval=TimeSpan.FromSeconds(30)};
+ readonly UserPreferences preferences=UserPreferences.Load();
+ readonly Dictionary<string,HashSet<uint>> inboxSnapshot=new(StringComparer.OrdinalIgnoreCase);
+ MailTray? tray;
+ bool isQuitting,checkingNewMail,preferencesReady;
+
  bool refreshing,refreshPending,suppressSelection;
  int generation;
  MailAccount? CurrentAccount=>AccountPicker.SelectedItem as MailAccount;
@@ -28,11 +33,114 @@ public partial class MainWindow : Window{
   InitializeComponent();
   try{accounts=AccountStore.Load();}catch{accounts=new();MessageBox.Show("Saved account settings could not be decrypted. The old data was not overwritten.","Aso4Mail",MessageBoxButton.OK,MessageBoxImage.Warning);}
   AccountPicker.ItemsSource=accounts;
-  timer.Tick+=async(_,_)=>await RefreshMessagesAsync(true);
+  timer.Tick+=async(_,_)=>{
+   await RefreshMessagesAsync(true);
+   await CheckNewMailAsync();
+  };
   timer.Start();
-  Closed+=(_,_)=>timer.Stop();
+  Closed+=(_,_)=>{
+   timer.Stop();
+   MailNotifications.OpenMessageRequested-=OpenAlert;
+   tray?.Dispose();
+  };
+  MailNotifications.OpenMessageRequested+=OpenAlert;
   if(accounts.Count>0)AccountPicker.SelectedIndex=0;
+  NotificationsToggle.IsChecked=preferences.NotificationsEnabled;
+  TrayToggle.IsChecked=preferences.MinimizeToTrayOnClose;
+  preferencesReady=true;
+
  }
+
+ void Window_Loaded(object sender,RoutedEventArgs e){
+  try{
+   tray=new MailTray(ShowFromTray,QuitProgram);
+  }catch(Exception ex){StatusText.Text="Tray icon unavailable: "+ex.Message;}
+  if(MailNotifications.Pending is { } pending){
+   MailNotifications.Pending=null;
+   _=OpenAlertAsync(pending.Email,pending.Uid);
+  }
+  _=CheckNewMailAsync();
+ }
+ void ShowFromTray(){
+  Dispatcher.BeginInvoke(new Action(()=>{
+   Show();
+   if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;
+   Activate();
+   Topmost=true;Topmost=false;
+   Focus();
+  }));
+ }
+ void QuitProgram(){
+  Dispatcher.BeginInvoke(new Action(()=>{
+   isQuitting=true;
+   tray?.Dispose();
+   Close();
+  }));
+ }
+ void Window_Closing(object? sender,System.ComponentModel.CancelEventArgs e){
+  if(isQuitting||!preferences.MinimizeToTrayOnClose)return;
+  e.Cancel=true;Hide();
+ }
+ void Quit_Click(object sender,RoutedEventArgs e)=>QuitProgram();
+ void Preferences_Changed(object sender,RoutedEventArgs e){
+  if(!preferencesReady)return;
+  preferences.NotificationsEnabled=NotificationsToggle.IsChecked==true;
+  preferences.MinimizeToTrayOnClose=TrayToggle.IsChecked==true;
+  preferences.Save();
+ }
+ void TestNotification_Click(object sender,RoutedEventArgs e){
+  try{MailNotifications.Test();StatusText.Text="Notification requested from Windows";}
+  catch(Exception ex){MessageBox.Show(ex.Message,"Notification unavailable");}
+ }
+ async Task CheckNewMailAsync(){
+  if(checkingNewMail||accounts.Count==0||!preferences.NotificationsEnabled)return;
+  checkingNewMail=true;
+  try{
+   foreach(var account in accounts.ToArray()){
+    IReadOnlyList<InboxRow> rows;
+    try{rows=await MailService.ListMessagesAsync(account,"INBOX",CancellationToken.None);}
+    catch{continue;}
+    var ids=rows.Select(x=>x.Uid).ToHashSet();
+    if(!inboxSnapshot.TryGetValue(account.Email,out var previous)){
+     inboxSnapshot[account.Email]=ids;
+     continue; // Existing mail is not new: prevent a notification flood.
+    }
+    var newlyArrived=rows.Where(x=>!previous.Contains(x.Uid)&&!x.IsRead)
+     .OrderBy(x=>x.Date).TakeLast(4).ToList();
+    inboxSnapshot[account.Email]=ids;
+    foreach(var row in newlyArrived)MailNotifications.Show(account,row);
+   }
+  }finally{checkingNewMail=false;}
+ }
+ void OpenAlert(string email,uint uid)=>_=OpenAlertAsync(email,uid);
+ async Task OpenAlertAsync(string email,uint uid){
+  var account=accounts.FirstOrDefault(a=>a.Email.Equals(email,StringComparison.OrdinalIgnoreCase));
+  if(account is null)return;
+  ShowFromTray();
+  if(!ReferenceEquals(CurrentAccount,account))AccountPicker.SelectedItem=account;
+  for(int i=0;i<75&&
+   (!ReferenceEquals(CurrentAccount,account)||folders.Count==0);i++){
+   await Task.Delay(120);
+  }
+  if(!ReferenceEquals(CurrentAccount,account))return;
+  var inbox=folders.FirstOrDefault(x=>x.Role=="Inbox");
+  if(inbox is null)return;
+  if(CurrentFolder?.FullName!=inbox.FullName)FolderList.SelectedItem=inbox;
+  for(int i=0;i<75&&
+   (CurrentFolder?.FullName!=inbox.FullName||!loaded.Any(r=>r.Uid==uid));i++){
+   await Task.Delay(120);
+   if(i==12)await RefreshMessagesAsync(true);
+  }
+  var message=loaded.FirstOrDefault(r=>r.Uid==uid);
+  if(message is null){
+   StatusText.Text="Notification message was moved or is not in the recent list.";
+   return;
+  }
+  DrawList(uid);
+  Messages.SelectedItem=Messages.Items.Cast<InboxRow>().FirstOrDefault(r=>r.Uid==uid);
+  Messages.ScrollIntoView(Messages.SelectedItem);
+ }
+
  async Task LoadFoldersAsync(){
   if(CurrentAccount is null)return;
   var account=CurrentAccount;int gen=generation;
@@ -119,7 +227,12 @@ public partial class MainWindow : Window{
    var candidate=new MailAccount{Email=email,Password=w.Secret};
    await MailService.ListFoldersAsync(candidate,CancellationToken.None);
    var previous=accounts.FindIndex(a=>a.Email.Equals(email,StringComparison.OrdinalIgnoreCase));
-   if(previous>=0)candidate.Signature=accounts[previous].Signature;
+   if(previous>=0){
+    candidate.Signature=accounts[previous].Signature;
+    candidate.SignatureImage=accounts[previous].SignatureImage;
+    candidate.SignatureWidth=accounts[previous].SignatureWidth;
+    candidate.Contacts=accounts[previous].Contacts??new();
+   }
    if(previous>=0)accounts[previous]=candidate;else accounts.Add(candidate);
    AccountStore.Save(accounts);AccountPicker.Items.Refresh();AccountPicker.SelectedItem=candidate;
   }catch(Exception ex){MessageBox.Show("Unable to add account: "+ex.Message,"Aso4Mail",MessageBoxButton.OK,MessageBoxImage.Warning);}
