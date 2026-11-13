@@ -1,18 +1,15 @@
 name: Build Aso4Mail Windows (unverified test)
-
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feature/outlook-like-redesign]
     paths:
       - '**/*.cs'
       - '**/*.xaml'
       - '**/*.csproj'
       - '.github/workflows/windows-build.yml'
-
 permissions:
   contents: read
-
 jobs:
   build-windows:
     runs-on: windows-latest
