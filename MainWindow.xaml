@@ -1,115 +1,231 @@
-<Window x:Class="Aso4Mail.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf" Title="Aso4Mail — Business Email" Width="1480" Height="900" MinWidth="1100" MinHeight="680" WindowStartupLocation="CenterScreen" Background="#15171B" Foreground="#F4F4F4" FontFamily="Segoe UI">
+<Window x:Class="Aso4Mail.MainWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+ Title="Aso4Mail — Business Email" Width="1450" Height="900" MinWidth="1040" MinHeight="670"
+ WindowStartupLocation="CenterScreen" Background="#191B1F" Foreground="#F5F5F6" FontFamily="Segoe UI"
+ Closing="Window_Closing" Loaded="Window_Loaded">
  <Window.Resources>
-  <Style x:Key="ActionButton" TargetType="Button">
-   <Setter Property="Background" Value="#303238"/><Setter Property="Foreground" Value="#F0F0F0"/><Setter Property="BorderBrush" Value="#40444C"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="12,8"/><Setter Property="Margin" Value="0,0,7,0"/><Setter Property="FontSize" Value="12"/><Setter Property="Cursor" Value="Hand"/>
-   <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#52442F"/><Setter Property="BorderBrush" Value="#C79B5C"/></Trigger></Style.Triggers>
+  <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+   <Setter Property="Background" Value="#303338"/><Setter Property="Padding" Value="14,11"/>
+   <Setter Property="Margin" Value="0,0,7,0"/><Setter Property="FontSize" Value="12.5"/>
   </Style>
-  <Style x:Key="FolderItem" TargetType="ListBoxItem">
-   <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="11,10"/><Setter Property="Margin" Value="0,2"/><Setter Property="Foreground" Value="#DEE1E5"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/>
-   <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#564630"/><Setter Property="Foreground" Value="#FFDB91"/></Trigger><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#33383E"/></Trigger></Style.Triggers>
+  <Style x:Key="SideButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+   <Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#C9CED5"/>
+   <Setter Property="Padding" Value="13,11"/><Setter Property="Margin" Value="0,2,0,1"/>
+   <Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="FontSize" Value="13"/>
   </Style>
-  <Style x:Key="MailItem" TargetType="ListBoxItem">
-   <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="5,3"/><Setter Property="Foreground" Value="White"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/>
-   <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#4E3C24"/></Trigger><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#31363B"/></Trigger></Style.Triggers>
+  <Style x:Key="FolderItem" TargetType="ListBoxItem" BasedOn="{StaticResource RoundedListBoxItem}">
+   <Setter Property="Foreground" Value="#D4D8DE"/><Setter Property="Padding" Value="11,12"/>
+   <Setter Property="Margin" Value="0,3"/><Setter Property="FontSize" Value="14"/>
+  </Style>
+  <Style x:Key="MailItem" TargetType="ListBoxItem" BasedOn="{StaticResource RoundedListBoxItem}">
+   <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="5,2"/>
+  </Style>
+  <Style x:Key="SectionLabel" TargetType="TextBlock">
+   <Setter Property="FontSize" Value="10"/><Setter Property="FontWeight" Value="SemiBold"/>
+   <Setter Property="Foreground" Value="#8994A3"/>
   </Style>
  </Window.Resources>
  <Grid>
-  <Grid.RowDefinitions><RowDefinition Height="66"/><RowDefinition Height="59"/><RowDefinition Height="*"/><RowDefinition Height="29"/></Grid.RowDefinitions>
-  <Border Grid.Row="0" Background="#101216" BorderBrush="#34373D" BorderThickness="0,0,0,1">
-   <Grid Margin="18,0">
-    <Grid.ColumnDefinitions><ColumnDefinition Width="245"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+  <Grid.RowDefinitions>
+   <RowDefinition Height="78"/>
+   <RowDefinition Height="72"/>
+   <RowDefinition Height="*"/>
+   <RowDefinition Height="31"/>
+  </Grid.RowDefinitions>
+  <!-- Rich charcoal title bar, premium brand and search -->
+  <Border Grid.Row="0" Background="#15171B" BorderBrush="#34383F" BorderThickness="0,0,0,1">
+   <Grid Margin="24,0">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="255"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-     <Image Width="43" Height="43" Source="pack://application:,,,/Assets/aso4mail.png" Margin="0,0,10,0"/>
-     <StackPanel><TextBlock Text="Aso4Mail" FontSize="23" FontWeight="SemiBold"/><TextBlock Text="BUSINESS EMAIL" FontSize="9" Foreground="#BE9660"/></StackPanel>
+     <Border Width="51" Height="51" CornerRadius="12" Background="#2F2B21" Margin="0,0,12,0">
+      <Image Width="49" Height="49" Source="pack://application:,,,/Assets/aso4mail.png"/>
+     </Border>
+     <StackPanel VerticalAlignment="Center">
+      <TextBlock Text="Aso4Mail" FontSize="24" FontWeight="SemiBold" Foreground="#F8F8F9"/>
+      <TextBlock Text="B U S I N E S S   E M A I L" FontSize="9" Foreground="#D0AA75" Margin="2,4,0,0"/>
+     </StackPanel>
     </StackPanel>
-    <DockPanel Grid.Column="1" Margin="12,12,60,12" MaxWidth="700">
-     <TextBlock DockPanel.Dock="Left" Text="Search" Foreground="#ABADB0" VerticalAlignment="Center" Margin="0,0,14,0"/>
-     <TextBox x:Name="SearchBox" TextChanged="SearchBox_TextChanged" Background="#282B31" Foreground="White" BorderBrush="#50545A" FontSize="14" VerticalContentAlignment="Center" Padding="9,5" ToolTip="Search messages currently loaded in this folder"/>
-    </DockPanel>
-    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="●  Secure SSL/TLS" Foreground="#95D3AB" Margin="0,0,22,0"/><Button Content="↻" Click="Refresh_Click" Style="{StaticResource ActionButton}" ToolTip="Sync inbox"/></StackPanel>
+    <Grid Grid.Column="1" Margin="20,16,65,16" MaxWidth="650" Height="43" VerticalAlignment="Center">
+     <Border Background="#2B2E34" CornerRadius="10" BorderBrush="#42474E" BorderThickness="1"/>
+     <DockPanel Margin="13,0">
+      <TextBlock Text="⌕" FontSize="26" Foreground="#C8A474" Margin="0,0,11,0" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+      <TextBox x:Name="SearchBox" TextChanged="SearchBox_TextChanged" ToolTip="Search loaded messages"
+       Background="Transparent" BorderThickness="0" Foreground="#F3F4F6" FontSize="14"
+       Padding="0" Height="39" VerticalContentAlignment="Center"/>
+     </DockPanel>
+    </Grid>
+    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+     <Border Padding="12,8" Background="#24352F" CornerRadius="15" Margin="0,0,14,0">
+      <TextBlock Text="●   Secure SSL/TLS" FontSize="11" Foreground="#A2DBB9"/>
+     </Border>
+     <Button Content="↻" Width="41" Height="41" Style="{StaticResource ActionButton}"
+      Click="Refresh_Click" ToolTip="Synchronize messages" FontSize="20" Margin="0"/>
+    </StackPanel>
    </Grid>
   </Border>
-  <Border Grid.Row="1" Background="#202227" BorderBrush="#373A42" BorderThickness="0,0,0,1">
-   <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="255,0,10,0">
-    <Button Content="＋  New mail" Background="#D0A15D" Foreground="#1A1A1A" BorderThickness="0" FontWeight="Bold" Padding="15,9" Margin="0,0,18,0" Click="Compose_Click"/>
-    <Button Content="↶  Reply" Click="Reply_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="↶↶  Reply all" Click="ReplyAll_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="➜  Forward" Click="Forward_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="▤  Archive" Click="Archive_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="▧  Delete" Click="Delete_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="⚑  Junk" Click="Junk_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="Empty Trash" Click="EmptyTrash_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="●  Read / unread" Click="ReadToggle_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="★  Flag" Click="Flag_Click" Style="{StaticResource ActionButton}"/>
-    <Button Content="⋯  Save .eml" Click="SaveEml_Click" Style="{StaticResource ActionButton}"/>
-   </StackPanel>
+  <!-- A refined, horizontally scrollable command ribbon -->
+  <Border Grid.Row="1" Background="#202329" BorderBrush="#363B43" BorderThickness="0,0,0,1">
+   <DockPanel LastChildFill="True">
+    <Border Width="235" DockPanel.Dock="Left" Background="#191D22">
+     <Button Content="＋     New message" Click="Compose_Click" Height="47" Margin="15,12,15,13"
+      Background="#D6AF77" Foreground="#191B1E" FontSize="14" FontWeight="Bold" Padding="13,0"/>
+    </Border>
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+     Padding="15,10,5,4" PanningMode="HorizontalOnly">
+     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+      <Button Content="↶  Reply" Style="{StaticResource ActionButton}" Click="Reply_Click"/>
+      <Button Content="↶↶  Reply all" Style="{StaticResource ActionButton}" Click="ReplyAll_Click"/>
+      <Button Content="➜  Forward" Style="{StaticResource ActionButton}" Click="Forward_Click"/>
+      <Border Width="1" Background="#4B4F56" Margin="7,8,14,9"/>
+      <Button Content="▤  Archive" Style="{StaticResource ActionButton}" Click="Archive_Click"/>
+      <Button Content="▧  Delete" Style="{StaticResource ActionButton}" Click="Delete_Click"/>
+      <Button Content="⚑  Junk" Style="{StaticResource ActionButton}" Click="Junk_Click"/>
+      <Button Content="Empty Trash" Style="{StaticResource ActionButton}" Click="EmptyTrash_Click"/>
+      <Border Width="1" Background="#4B4F56" Margin="7,8,14,9"/>
+      <Button Content="●  Read / unread" Style="{StaticResource ActionButton}" Click="ReadToggle_Click"/>
+      <Button Content="★  Flag" Style="{StaticResource ActionButton}" Click="Flag_Click"/>
+      <Button Content="↓  Save EML" Style="{StaticResource ActionButton}" Click="SaveEml_Click"/>
+     </StackPanel>
+    </ScrollViewer>
+   </DockPanel>
   </Border>
+  <!-- Sidebar, message list, reading pane -->
   <Grid Grid.Row="2">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="246"/><ColumnDefinition Width="385"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-   <Border Grid.Column="0" Background="#191C21" BorderBrush="#373A42" BorderThickness="0,0,1,0">
-    <DockPanel Margin="12,16">
+   <Grid.ColumnDefinitions>
+    <ColumnDefinition Width="235" MinWidth="210"/>
+    <ColumnDefinition Width="365" MinWidth="305"/>
+    <ColumnDefinition Width="*" MinWidth="390"/>
+   </Grid.ColumnDefinitions>
+   <Border Grid.Column="0" Background="#1A1E23" BorderBrush="#363A40" BorderThickness="0,0,1,0">
+    <DockPanel Margin="13,18,13,10">
      <StackPanel DockPanel.Dock="Top">
-      <TextBlock Text="YOUR ACCOUNTS" FontSize="10" Foreground="#9AA0AB" Margin="9,0,0,9"/>
-      <ComboBox x:Name="AccountPicker" Height="38" Background="#33363B" Foreground="White" SelectionChanged="AccountPicker_SelectionChanged"/>
-      <Button Content="＋  Add email account" Click="AddAccount_Click" Style="{StaticResource ActionButton}" Margin="0,11,0,25"/>
-      <TextBlock Text="MAIL FOLDERS" FontSize="10" Foreground="#9AA0AB" Margin="9,0,0,9"/>
+      <TextBlock Text="WORKSPACE" Style="{StaticResource SectionLabel}" Margin="12,0,0,11"/>
+      <Border Background="#2B3139" CornerRadius="9" Padding="5" Margin="0,0,0,9">
+       <ComboBox x:Name="AccountPicker" Height="42" SelectionChanged="AccountPicker_SelectionChanged"
+        Background="#2B3139" FontWeight="SemiBold" ToolTip="Select email account"/>
+      </Border>
+      <Button Content="＋   Add email account" Click="AddAccount_Click" Style="{StaticResource SideButton}"/>
+      <Border Height="1" Background="#353B44" Margin="9,18,9,18"/>
+      <TextBlock Text="FOLDERS" Style="{StaticResource SectionLabel}" Margin="12,0,0,12"/>
      </StackPanel>
-     <StackPanel DockPanel.Dock="Bottom">
-      <Button Content="♙  Contacts" Style="{StaticResource ActionButton}" Margin="0,0,0,9" Click="Contacts_Click"/>
-      <Button Content="✎  Account signatures" Style="{StaticResource ActionButton}" Margin="0,0,0,9" Click="Signature_Click"/>
-      <Button Content="🌐  aso4tech.com" Style="{StaticResource ActionButton}" Click="Website_Click"/>
-      <TextBlock Text="Aso4Mail 10.1  •  Windows" Foreground="#858A93" FontSize="10" Margin="8,17,0,0"/>
+     <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+      <Border Height="1" Background="#353B44" Margin="8,0,8,10"/>
+      <Button Content="♙   Contacts" Click="Contacts_Click" Style="{StaticResource SideButton}"/>
+      <Button Content="✎   Signatures" Click="Signature_Click" Style="{StaticResource SideButton}"/>
+      <Button Content="◎   Our website" Click="Website_Click" Style="{StaticResource SideButton}"/>
+      <Border Height="1" Background="#353B44" Margin="8,9,8,12"/>
+      <TextBlock Text="NOTIFICATIONS" Style="{StaticResource SectionLabel}" Margin="12,0,0,12"/>
+      <CheckBox x:Name="NotificationsToggle" Content="Windows notifications" Margin="14,0,0,10"
+       Checked="Preferences_Changed" Unchecked="Preferences_Changed"/>
+      <CheckBox x:Name="TrayToggle" Content="Close to system tray" Margin="14,0,0,10"
+       Checked="Preferences_Changed" Unchecked="Preferences_Changed"/>
+      <Button Content="Test notification" Click="TestNotification_Click" Style="{StaticResource SideButton}"/>
+      <Button Content="Quit Aso4Mail" Click="Quit_Click" Style="{StaticResource SideButton}"/>
+      <TextBlock Text="Aso4Mail 10.1 • Secure mail" Foreground="#8993A0" FontSize="10" Margin="12,9,0,0"/>
      </StackPanel>
-     <ListBox x:Name="FolderList" SelectionChanged="FolderList_SelectionChanged" ItemContainerStyle="{StaticResource FolderItem}" BorderThickness="0" Background="Transparent" Foreground="White">
-      <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" FontSize="14" TextTrimming="CharacterEllipsis"/></DataTemplate></ListBox.ItemTemplate>
+     <ListBox x:Name="FolderList" SelectionChanged="FolderList_SelectionChanged"
+      ItemContainerStyle="{StaticResource FolderItem}" Background="Transparent" BorderThickness="0"
+      Foreground="#E0E4E9" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+      <ListBox.ItemTemplate><DataTemplate>
+       <DockPanel LastChildFill="True"><TextBlock Text="{Binding Display}" FontSize="14" TextTrimming="CharacterEllipsis"/></DockPanel>
+      </DataTemplate></ListBox.ItemTemplate>
      </ListBox>
     </DockPanel>
    </Border>
-   <Border Grid.Column="1" Background="#22252A" BorderBrush="#383B42" BorderThickness="0,0,1,0">
+   <!-- Professional mail list -->
+   <Border Grid.Column="1" Background="#25282E" BorderBrush="#3C4047" BorderThickness="0,0,1,0">
     <DockPanel>
-     <StackPanel DockPanel.Dock="Top" Margin="17,20,17,12">
-      <DockPanel>
-       <StackPanel DockPanel.Dock="Left"><TextBlock x:Name="FolderTitle" Text="Inbox" FontSize="26" FontWeight="SemiBold"/><TextBlock x:Name="FolderCount" Text="Select an account" Foreground="#A6AAB2" FontSize="11" Margin="0,3,0,0"/></StackPanel>
-       <CheckBox x:Name="UnreadFilter" Content="Unread" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#D1BC96" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-      </DockPanel>
+     <StackPanel DockPanel.Dock="Top" Margin="19,24,19,13">
+      <Grid>
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <StackPanel Grid.Column="0">
+        <TextBlock Text="MAILBOX" FontSize="10" Foreground="#A7AFBA" FontWeight="SemiBold" Margin="0,0,0,7"/>
+        <TextBlock x:Name="FolderTitle" Text="Inbox" FontSize="30" FontWeight="SemiBold" Foreground="#F4F5F6"/>
+        <TextBlock x:Name="FolderCount" Text="Select an account" FontSize="12" Foreground="#97A0AD" Margin="0,5,0,0"/>
+       </StackPanel>
+       <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
+        <CheckBox x:Name="UnreadFilter" Content="Unread only" Foreground="#E7C294"
+         Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+       </StackPanel>
+      </Grid>
+      <Border Height="1" Background="#3C4149" Margin="0,18,0,0"/>
      </StackPanel>
-     <ListBox x:Name="Messages" ItemContainerStyle="{StaticResource MailItem}" SelectionChanged="Messages_SelectionChanged" Background="Transparent" BorderThickness="0" Foreground="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-      <ListBox.ItemTemplate><DataTemplate><Border Padding="13,12" Background="Transparent" BorderBrush="#383B42" BorderThickness="0,0,0,1" CornerRadius="7"><Grid>
-       <Grid.ColumnDefinitions><ColumnDefinition Width="41"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-       <Border Width="34" Height="34" CornerRadius="11" Background="#58452D" VerticalAlignment="Top"><TextBlock Text="{Binding Initials}" FontSize="12" Foreground="#FFE0A8" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-       <StackPanel Grid.Column="1">
-        <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Status}" Foreground="#E5BB70" FontSize="10"/><TextBlock Text="{Binding From}" Foreground="#FAFAFA" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" FontSize="13"/></DockPanel>
-        <TextBlock Text="{Binding Subject}" Foreground="#CFB891" TextTrimming="CharacterEllipsis" FontSize="13" Margin="0,7,0,4"/>
-        <TextBlock Text="{Binding DisplayDate}" Foreground="#9CA1AB" FontSize="11"/>
-       </StackPanel></Grid></Border></DataTemplate></ListBox.ItemTemplate>
+     <ListBox x:Name="Messages" Background="Transparent" BorderThickness="0"
+      ItemContainerStyle="{StaticResource MailItem}" SelectionChanged="Messages_SelectionChanged"
+      ScrollViewer.HorizontalScrollBarVisibility="Disabled" Foreground="White">
+      <ListBox.ItemTemplate><DataTemplate>
+       <Border CornerRadius="9" Padding="12,14" Background="Transparent" BorderBrush="#383C44" BorderThickness="0,0,0,1">
+        <Grid>
+         <Grid.ColumnDefinitions><ColumnDefinition Width="45"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+         <Border Width="37" Height="37" CornerRadius="10" Background="#554734" VerticalAlignment="Top">
+          <TextBlock Text="{Binding Initials}" FontSize="13" Foreground="#F6D7A8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+         </Border>
+         <StackPanel Grid.Column="1" Margin="2,0,0,0">
+          <DockPanel LastChildFill="True">
+           <TextBlock Text="{Binding Status}" DockPanel.Dock="Right" Foreground="#EDBC76" FontSize="11" Margin="6,1,0,0"/>
+           <TextBlock Text="{Binding From}" TextTrimming="CharacterEllipsis" Foreground="#F1F3F5" FontSize="13" FontWeight="SemiBold"/>
+          </DockPanel>
+          <TextBlock Text="{Binding Subject}" Foreground="#D5B892" FontSize="13" Margin="0,8,0,7" TextTrimming="CharacterEllipsis"/>
+          <TextBlock Text="{Binding DisplayDate}" Foreground="#99A1AD" FontSize="11"/>
+         </StackPanel>
+        </Grid>
+       </Border>
+      </DataTemplate></ListBox.ItemTemplate>
      </ListBox>
     </DockPanel>
    </Border>
-   <Border Grid.Column="2" Background="#282A2F">
+   <!-- Reading view -->
+   <Border Grid.Column="2" Background="#292C32">
     <Grid>
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-     <StackPanel Margin="30,24,30,10">
-      <TextBlock Text="READING MESSAGE" FontSize="11" Foreground="#A7ABB5" Margin="0,0,0,20"/>
-      <TextBlock x:Name="SubjectText" Text="Select an email" FontSize="28" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="#F4F4F4"/>
-      <TextBlock x:Name="FromText" Foreground="#D8B378" FontSize="13" Margin="0,17,0,6" TextWrapping="Wrap"/>
-      <TextBlock x:Name="ToText" Foreground="#A8AEB6" FontSize="12" TextWrapping="Wrap"/>
-      <Separator Background="#4C4D53" Margin="0,22,0,12"/>
+     <StackPanel Grid.Row="0" Margin="34,29,35,13">
+      <TextBlock Text="READING MESSAGE" Style="{StaticResource SectionLabel}" Margin="0,0,0,23"/>
+      <TextBlock x:Name="SubjectText" Text="Select an email" FontSize="29" FontWeight="SemiBold" Foreground="#F7F8F9" TextWrapping="Wrap"/>
+      <StackPanel Orientation="Horizontal" Margin="0,21,0,0">
+       <Border Width="46" Height="46" Background="#3B504A" CornerRadius="11" Margin="0,0,13,0">
+        <TextBlock Text="✉" Foreground="#C5E9D7" FontSize="19" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+       </Border>
+       <StackPanel VerticalAlignment="Center">
+        <TextBlock x:Name="FromText" Text="Sender" FontSize="13" FontWeight="SemiBold" Foreground="#E8EBEF" TextWrapping="Wrap"/>
+        <TextBlock x:Name="ToText" Text="To" FontSize="11" Foreground="#9DA8B6" Margin="0,5,0,0" TextWrapping="Wrap"/>
+       </StackPanel>
+      </StackPanel>
+      <Border Height="1" Background="#454951" Margin="0,21,0,0"/>
      </StackPanel>
-     <DockPanel Grid.Row="1" Margin="28,0,28,10">
-      <TextBlock Text="Attachments:" DockPanel.Dock="Left" Foreground="#A9ADB5" VerticalAlignment="Center" Margin="0,0,12,0"/>
-      <Button Content="Save selected attachment" DockPanel.Dock="Right" Click="SaveAttachment_Click" Style="{StaticResource ActionButton}"/>
-      <ComboBox x:Name="AttachmentPicker" MinHeight="32" Background="#33363B" Foreground="White" DisplayMemberPath="Display"/>
+     <DockPanel Grid.Row="1" Margin="34,0,34,12">
+      <TextBlock Text="ATTACHMENTS" Foreground="#A3ACB7" FontSize="10" FontWeight="SemiBold" DockPanel.Dock="Left" Margin="0,10,13,0"/>
+      <Button Content="↓  Save" DockPanel.Dock="Right" Click="SaveAttachment_Click" Style="{StaticResource ActionButton}" Margin="9,0,0,0"/>
+      <ComboBox x:Name="AttachmentPicker" DisplayMemberPath="Display" Height="38" Background="#33373D"/>
      </DockPanel>
-     <TabControl Grid.Row="2" x:Name="BodyTabs" SelectionChanged="BodyTabs_SelectionChanged" Margin="25,5,26,18" Background="#292B30" Foreground="White" BorderThickness="0">
-      <TabItem Header="Plain text"><TextBox x:Name="MessageBody" IsReadOnly="True" Background="#292B30" BorderThickness="0" Foreground="#E3E4E6" Padding="16" FontSize="14" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/></TabItem>
-      <TabItem Header="Formatted HTML"><Grid Background="#F8F8F8"><wv2:WebView2 x:Name="HtmlWebView" Visibility="Collapsed"/><TextBlock x:Name="HtmlNotice" Text="Choose a message to preview its formatting. External resources and scripts are blocked." TextWrapping="Wrap" Padding="18" Foreground="#222" VerticalAlignment="Center"/></Grid></TabItem>
+     <TabControl Grid.Row="2" x:Name="BodyTabs" SelectionChanged="BodyTabs_SelectionChanged" Margin="28,4,27,17" Background="#2B2E34" Foreground="White" BorderThickness="0">
+      <TabItem Header="Plain text">
+       <Border Background="#30343B" CornerRadius="10">
+        <TextBox x:Name="MessageBody" IsReadOnly="True" BorderThickness="0" Background="Transparent"
+         Foreground="#EBECEF" Padding="21,19" FontSize="14" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+       </Border>
+      </TabItem>
+      <TabItem Header="Formatted HTML">
+       <Border Background="#F8F9FB" CornerRadius="9">
+        <Grid>
+         <wv2:WebView2 x:Name="HtmlWebView" Visibility="Collapsed"/>
+         <TextBlock x:Name="HtmlNotice" Text="Choose an email to preview its formatting. Scripts and remote images are blocked."
+          TextWrapping="Wrap" Padding="20" Foreground="#293341" VerticalAlignment="Center"/>
+        </Grid>
+       </Border>
+      </TabItem>
      </TabControl>
     </Grid>
    </Border>
   </Grid>
-  <Border Grid.Row="3" Background="#111317"><DockPanel Margin="14,0">
-   <TextBlock Text="TLS certificate validation enabled  •  Sync every 30 seconds while open" FontSize="10" Foreground="#9AA0A9" VerticalAlignment="Center"/>
-   <TextBlock x:Name="StatusText" Text="Ready" DockPanel.Dock="Right" FontSize="11" Foreground="#D7AE70" VerticalAlignment="Center"/>
-  </DockPanel></Border>
+  <!-- Status bar -->
+  <Border Grid.Row="3" Background="#15171A" BorderBrush="#383A40" BorderThickness="0,1,0,0">
+   <DockPanel Margin="20,0">
+    <TextBlock Text="●  SSL/TLS certificate checks enabled   ·   Sync every 30 seconds" DockPanel.Dock="Left"
+     FontSize="10" Foreground="#8EBEA2" VerticalAlignment="Center"/>
+    <TextBlock x:Name="StatusText" Text="Ready" DockPanel.Dock="Right" FontSize="11" Foreground="#D0A675" VerticalAlignment="Center"/>
+   </DockPanel>
+  </Border>
  </Grid>
 </Window>
