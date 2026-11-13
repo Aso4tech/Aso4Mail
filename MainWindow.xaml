@@ -19,7 +19,7 @@
    <Grid Margin="18,0">
     <Grid.ColumnDefinitions><ColumnDefinition Width="245"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-     <Border Width="39" Height="39" Background="#D5A14C" CornerRadius="9" Margin="0,0,10,0"><TextBlock Text="✉" Foreground="#171717" FontSize="21" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+     <Image Width="43" Height="43" Source="pack://application:,,,/Assets/aso4mail.png" Margin="0,0,10,0"/>
      <StackPanel><TextBlock Text="Aso4Mail" FontSize="23" FontWeight="SemiBold"/><TextBlock Text="BUSINESS EMAIL" FontSize="9" Foreground="#BE9660"/></StackPanel>
     </StackPanel>
     <DockPanel Grid.Column="1" Margin="12,12,60,12" MaxWidth="700">
