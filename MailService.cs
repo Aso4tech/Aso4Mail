@@ -50,7 +50,17 @@ public static class MailService {
    foreach(var folder in roots)await WalkAsync(folder,0);
   }
   await c.DisconnectAsync(true,ct);
-  return all.Values.OrderBy(x=>x.SortOrder).ThenBy(x=>x.Name,StringComparer.OrdinalIgnoreCase).ToList();
+  // Keep every real server folder, but don't present two identically named special folders.
+  var ordered=all.Values.OrderBy(x=>x.SortOrder).ThenBy(x=>x.Name,StringComparer.OrdinalIgnoreCase).ToList();
+  var seenRoles=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+  var display=new List<MailFolderRow>();
+  foreach(var f in ordered){
+   if(!string.IsNullOrEmpty(f.Role)&&!seenRoles.Add(f.Role)){
+    display.Add(new MailFolderRow{FullName=f.FullName,Name=f.FullName,
+      Role="",Unread=f.Unread,SortOrder=8});
+   }else display.Add(f);
+  }
+  return display;
  }
  static string GetRole(IMailFolder f){
   var flags=f.Attributes;
@@ -71,7 +81,7 @@ public static class MailService {
   var start=Math.Max(0,f.Count-160);
   var items=await f.FetchAsync(start,f.Count-1,MessageSummaryItems.UniqueId|MessageSummaryItems.Envelope|MessageSummaryItems.Flags|MessageSummaryItems.BodyStructure,ct);
   var result=items.Select(s=>new InboxRow{
-   Uid=s.UniqueId.Id,Folder=folder,
+   Uid=s.UniqueId.Id,UidValidity=f.UidValidity,Folder=folder,
    From=s.Envelope?.From?.ToString()??"Unknown",
    SenderAddress=s.Envelope?.From?.Mailboxes?.FirstOrDefault()?.Address??"",
    To=s.Envelope?.To?.ToString()??"",

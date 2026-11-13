@@ -25,6 +25,7 @@ public sealed class MailFolderRow {
 }
 public sealed class InboxRow {
  public uint Uid {get;init;}
+ public uint UidValidity {get;init;}
  public string Folder {get;init;}="";
  public string From {get;init;}="";
  public string SenderAddress {get;init;}="";

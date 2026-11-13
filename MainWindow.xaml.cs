@@ -20,7 +20,7 @@ public partial class MainWindow : Window{
  MessageDetail? detail;
  readonly DispatcherTimer timer=new(){Interval=TimeSpan.FromSeconds(30)};
  readonly UserPreferences preferences=UserPreferences.Load();
- readonly Dictionary<string,HashSet<uint>> inboxSnapshot=new(StringComparer.OrdinalIgnoreCase);
+ readonly Dictionary<string,(uint Validity,HashSet<uint> Seen)> inboxSnapshot=new(StringComparer.OrdinalIgnoreCase);
  MailTray? tray;
  bool isQuitting,checkingNewMail,preferencesReady;
 
@@ -57,7 +57,7 @@ public partial class MainWindow : Window{
   }catch(Exception ex){StatusText.Text="Tray icon unavailable: "+ex.Message;}
   if(MailNotifications.Pending is { } pending){
    MailNotifications.Pending=null;
-   _=OpenAlertAsync(pending.Email,pending.Uid);
+   _=OpenAlertAsync(pending.Email,pending.Uid,pending.Validity);
   }
   _=CheckNewMailAsync();
  }
@@ -101,19 +101,21 @@ public partial class MainWindow : Window{
     try{rows=await MailService.ListMessagesAsync(account,"INBOX",CancellationToken.None);}
     catch{continue;}
     var ids=rows.Select(x=>x.Uid).ToHashSet();
-    if(!inboxSnapshot.TryGetValue(account.Email,out var previous)){
-     inboxSnapshot[account.Email]=ids;
-     continue; // Existing mail is not new: prevent a notification flood.
+    var validity=rows.FirstOrDefault()?.UidValidity??0u;
+    if(!inboxSnapshot.TryGetValue(account.Email,out var previous)||
+     (previous.Validity!=0&&validity!=0&&previous.Validity!=validity)){
+     inboxSnapshot[account.Email]=(validity,ids);
+     continue; // Baseline or server UID reset: do not generate stale alerts.
     }
-    var newlyArrived=rows.Where(x=>!previous.Contains(x.Uid)&&!x.IsRead)
+    var newlyArrived=rows.Where(x=>!previous.Seen.Contains(x.Uid)&&!x.IsRead)
      .OrderBy(x=>x.Date).TakeLast(4).ToList();
-    inboxSnapshot[account.Email]=ids;
+    inboxSnapshot[account.Email]=(validity==0?previous.Validity:validity,ids);
     foreach(var row in newlyArrived)MailNotifications.Show(account,row);
    }
   }finally{checkingNewMail=false;}
  }
- void OpenAlert(string email,uint uid)=>_=OpenAlertAsync(email,uid);
- async Task OpenAlertAsync(string email,uint uid){
+ void OpenAlert(string email,uint uid,uint validity)=>_=OpenAlertAsync(email,uid,validity);
+ async Task OpenAlertAsync(string email,uint uid,uint validity){
   var account=accounts.FirstOrDefault(a=>a.Email.Equals(email,StringComparison.OrdinalIgnoreCase));
   if(account is null)return;
   ShowFromTray();
@@ -131,7 +133,7 @@ public partial class MainWindow : Window{
    await Task.Delay(120);
    if(i==12)await RefreshMessagesAsync(true);
   }
-  var message=loaded.FirstOrDefault(r=>r.Uid==uid);
+  var message=loaded.FirstOrDefault(r=>r.Uid==uid&&r.UidValidity==validity);
   if(message is null){
    StatusText.Text="Notification message was moved or is not in the recent list.";
    return;
