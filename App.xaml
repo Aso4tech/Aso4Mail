@@ -23,7 +23,7 @@
       <Trigger Property="IsPressed" Value="True"><Setter TargetName="Body" Property="Opacity" Value=".78"/></Trigger>
       <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Body" Property="Opacity" Value=".38"/></Trigger>
      </ControlTemplate.Triggers>
-    </Setter.Value></ControlTemplate></Setter.Value>
+    </ControlTemplate></Setter.Value>
    </Setter>
   </Style>
   <Style TargetType="Button" BasedOn="{StaticResource ModernButton}"/>
@@ -39,7 +39,7 @@
       <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Container" Property="Background" Value="#343A41"/></Trigger>
       <Trigger Property="IsSelected" Value="True"><Setter TargetName="Container" Property="Background" Value="#3B3934"/><Setter Property="Foreground" Value="#F1C78E"/></Trigger>
      </ControlTemplate.Triggers>
-    </Setter.Value></ControlTemplate></Setter.Value>
+    </ControlTemplate></Setter.Value>
    </Setter>
   </Style>
   <Style TargetType="ListBoxItem" BasedOn="{StaticResource RoundedListBoxItem}"/>
