@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using MailKit;
 using Microsoft.Win32;
 using Microsoft.Web.WebView2.Core;
+using MimeKit;
 namespace Aso4Mail;
 public partial class MainWindow : Window{
  readonly List<MailAccount> accounts;
@@ -135,9 +136,19 @@ public partial class MainWindow : Window{
  void ReplyAll_Click(object sender,RoutedEventArgs e){
   if(CurrentAccount is null||CurrentMessage is null||detail is null)return;
   var row=CurrentMessage;
-  var to=row.SenderAddress;
-  var cc=detail.To; // keep original distribution, avoid duplicate current account
-  new ComposeWindow(CurrentAccount,to,cc,row.Subject.StartsWith("Re:",StringComparison.OrdinalIgnoreCase)?row.Subject:"Re: "+row.Subject,"\n\n------ Original message ------\n"+detail.Text){Owner=this}.ShowDialog();
+  var known=new HashSet<string>(StringComparer.OrdinalIgnoreCase){CurrentAccount.Email,row.SenderAddress};
+  var copied=new List<string>();
+  foreach(var field in new[]{detail.To,detail.Cc}){
+   if(string.IsNullOrWhiteSpace(field))continue;
+   try{
+    foreach(var mb in InternetAddressList.Parse(field).Mailboxes){
+     if(known.Add(mb.Address))copied.Add(mb.Address);
+    }
+   }catch(FormatException){}
+  }
+  new ComposeWindow(CurrentAccount,row.SenderAddress,string.Join("; ",copied),
+   row.Subject.StartsWith("Re:",StringComparison.OrdinalIgnoreCase)?row.Subject:"Re: "+row.Subject,
+   "\\n\\n------ Original message ------\\n"+detail.Text){Owner=this}.ShowDialog();
  }
  void Forward_Click(object sender,RoutedEventArgs e){
   if(CurrentAccount is null||CurrentMessage is null||detail is null)return;
@@ -151,6 +162,19 @@ public partial class MainWindow : Window{
  }
  async void Archive_Click(object sender,RoutedEventArgs e)=>await MoveToRoleAsync("Archive");
  async void Delete_Click(object sender,RoutedEventArgs e)=>await MoveToRoleAsync("Trash");
+ async void Junk_Click(object sender,RoutedEventArgs e)=>await MoveToRoleAsync("Junk");
+ async void EmptyTrash_Click(object sender,RoutedEventArgs e){
+  if(CurrentAccount is null||CurrentFolder?.Role!="Trash"){
+   MessageBox.Show("Open the Trash folder before emptying it.","Aso4Mail");return;
+  }
+  if(MessageBox.Show("Permanently delete all messages in this Trash folder? This cannot be undone.","Empty Trash",MessageBoxButton.YesNo,MessageBoxImage.Warning)!=MessageBoxResult.Yes)return;
+  try{
+   StatusText.Text="Emptying Trash...";
+   await MailService.EmptyTrashAsync(CurrentAccount,CurrentFolder.FullName,CancellationToken.None);
+   await RefreshMessagesAsync();
+  }catch(Exception ex){MessageBox.Show(ex.Message,"Aso4Mail");}
+ }
+
  async Task MoveToRoleAsync(string role){
   var dest=folders.FirstOrDefault(f=>f.Role==role);
   if(dest is null){MessageBox.Show(role+" folder was not found on this server.");return;}

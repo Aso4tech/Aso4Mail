@@ -34,10 +34,20 @@ public static class MailService {
    var row=new MailFolderRow{FullName=folder.FullName,Name=role.Length==0?folder.Name:role,Role=role,Unread=Math.Max(0,folder.Unread),SortOrder=role switch{"Inbox"=>0,"Sent"=>1,"Drafts"=>2,"Archive"=>3,"Junk"=>4,"Trash"=>5,_=>6}};
    all.TryAdd(folder.FullName,row);
   }
-  Add(c.Inbox);
+  var visited=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+  async Task WalkAsync(IMailFolder folder,int depth){
+   if(!visited.Add(folder.FullName))return;
+   Add(folder);
+   if(depth>=4||visited.Count>=300)return;
+   try{
+    var children=await folder.GetSubfoldersAsync(false,ct);
+    foreach(var child in children)await WalkAsync(child,depth+1);
+   }catch(MailKit.CommandException){}catch(FolderNotFoundException){}
+  }
+  await WalkAsync(c.Inbox,0);
   foreach(var ns in c.PersonalNamespaces){
-   var folders=await c.GetFoldersAsync(ns,false,ct);
-   foreach(var folder in folders)Add(folder);
+   var roots=await c.GetFoldersAsync(ns,false,ct);
+   foreach(var folder in roots)await WalkAsync(folder,0);
   }
   await c.DisconnectAsync(true,ct);
   return all.Values.OrderBy(x=>x.SortOrder).ThenBy(x=>x.Name,StringComparer.OrdinalIgnoreCase).ToList();
@@ -165,9 +175,9 @@ public static class MailService {
   }
   var msg=new MimeMessage();
   msg.From.Add(MailboxAddress.Parse(account.Email));
-  foreach(var v in SplitAddresses(to))msg.To.Add(MailboxAddress.Parse(v));
-  foreach(var v in SplitAddresses(cc))msg.Cc.Add(MailboxAddress.Parse(v));
-  foreach(var v in SplitAddresses(bcc))msg.Bcc.Add(MailboxAddress.Parse(v));
+  AddAddresses(msg.To,to);
+  AddAddresses(msg.Cc,cc);
+  AddAddresses(msg.Bcc,bcc);
   if(msg.To.Count+msg.Cc.Count+msg.Bcc.Count==0)throw new InvalidOperationException("Enter a recipient.");
   msg.Subject=subject.Trim();
   var signature=account.Signature??"";
@@ -186,7 +196,11 @@ public static class MailService {
   foreach(var p in paths)builder.Attachments.Add(p);
   msg.Body=builder.ToMessageBody();return msg;
  }
- static IEnumerable<string> SplitAddresses(string value)=> (value??"").Split(new[]{',',';'},StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries);
+ static void AddAddresses(InternetAddressList target,string raw){
+  if(string.IsNullOrWhiteSpace(raw))return;
+  var parsed=InternetAddressList.Parse(raw.Replace(';',','));
+  foreach(var address in parsed)target.Add(address);
+ }
  public static async Task<SendResult> SendAsync(MailAccount a,string to,string cc,string bcc,string subject,string body,IReadOnlyList<string> paths,CancellationToken ct){
   var msg=BuildMessage(a,to,cc,bcc,subject,body,paths);
   using(var smtp=new SmtpClient{Timeout=35000}){
@@ -220,10 +234,27 @@ public static class MailService {
    var found=c.GetFolder(special);
    if(found is not null)return found;
   }catch(NotSupportedException){}
+  var visited=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+  async Task<IMailFolder?> SearchAsync(IMailFolder folder,int depth){
+   if(!visited.Add(folder.FullName))return null;
+   if(GetRole(folder)==role)return folder;
+   if(depth>=4||visited.Count>=300)return null;
+   try{
+    var children=await folder.GetSubfoldersAsync(false,ct);
+    foreach(var child in children){
+     var found=await SearchAsync(child,depth+1);
+     if(found is not null)return found;
+    }
+   }catch(MailKit.CommandException){}catch(FolderNotFoundException){}
+   return null;
+  }
+  var inbox=await SearchAsync(c.Inbox,0);if(inbox is not null)return inbox;
   foreach(var ns in c.PersonalNamespaces){
-   var folders=await c.GetFoldersAsync(ns,false,ct);
-   var found=folders.FirstOrDefault(f=>GetRole(f)==role);
-   if(found is not null)return found;
+   var roots=await c.GetFoldersAsync(ns,false,ct);
+   foreach(var folder in roots){
+    var found=await SearchAsync(folder,0);
+    if(found is not null)return found;
+   }
   }
   return null;
  }

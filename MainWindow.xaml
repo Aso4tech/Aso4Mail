@@ -37,6 +37,8 @@
     <Button Content="➜  Forward" Click="Forward_Click" Style="{StaticResource ActionButton}"/>
     <Button Content="▤  Archive" Click="Archive_Click" Style="{StaticResource ActionButton}"/>
     <Button Content="▧  Delete" Click="Delete_Click" Style="{StaticResource ActionButton}"/>
+    <Button Content="⚑  Junk" Click="Junk_Click" Style="{StaticResource ActionButton}"/>
+    <Button Content="Empty Trash" Click="EmptyTrash_Click" Style="{StaticResource ActionButton}"/>
     <Button Content="●  Read / unread" Click="ReadToggle_Click" Style="{StaticResource ActionButton}"/>
     <Button Content="★  Flag" Click="Flag_Click" Style="{StaticResource ActionButton}"/>
     <Button Content="⋯  Save .eml" Click="SaveEml_Click" Style="{StaticResource ActionButton}"/>
