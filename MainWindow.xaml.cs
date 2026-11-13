@@ -136,9 +136,12 @@ public partial class MainWindow : Window{
    StatusText.Text="Notification message was moved or is not in the recent list.";
    return;
   }
-  DrawList(uid);
+  // A search or unread-only filter must not hide the requested mail.
+  SearchBox.Text="";
+  UnreadFilter.IsChecked=false;
+  DrawList();
   Messages.SelectedItem=Messages.Items.Cast<InboxRow>().FirstOrDefault(r=>r.Uid==uid);
-  Messages.ScrollIntoView(Messages.SelectedItem);
+  if(Messages.SelectedItem is not null)Messages.ScrollIntoView(Messages.SelectedItem);
  }
 
  async Task LoadFoldersAsync(){
